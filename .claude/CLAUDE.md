@@ -128,6 +128,45 @@ For detailed TDD workflow, load the `tdd` skill.
 For refactoring methodology, load the `refactoring` skill.
 For detailed guidance on expectations and documentation, load the `expectations` skill.
 
+## Configuration Management
+
+**Core principle**: Separate secrets from application config. Never commit credentials.
+
+**Pattern for secrets (credentials, API keys):**
+- File: `secrets.yaml` (or `secrets.json`, `.env`)
+- In `.gitignore`: YES
+- Example file: `secrets.yaml.example` with placeholder values
+- Committed: Example only, never actual secrets
+
+**Pattern for application config (non-secret settings):**
+- File: `config.yaml` (or `config.json`)
+- In `.gitignore`: YES (allows per-deployment customization)
+- Example file: `config.yaml.example` with defaults/documentation
+- Committed: Example only
+
+**Example structure:**
+```yaml
+# secrets.yaml.example
+airtable:
+  api_key: patXXXXXXXXXXXXXXXX.your_api_key_here
+  base_id: appXXXXXXXXXXXXXX
+
+# config.yaml.example
+default_email_domain: ""  # Optional: domain to append to usernames
+```
+
+**Setup instructions (README.md):**
+```bash
+cp secrets.yaml.example secrets.yaml
+cp config.yaml.example config.yaml
+# Edit both files with actual values
+```
+
+**Loading pattern (Python/Pydantic):**
+- Secrets: Load from `secrets.yaml`, fail if missing required values
+- Config: Load from `config.yaml`, use defaults if file missing or values empty
+- Validate at load time with Pydantic models
+
 ## Resources and References
 
 **TypeScript:**
