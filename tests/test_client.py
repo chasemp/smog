@@ -54,6 +54,53 @@ def test_find_by_email_returns_employee_when_found(
     assert result.employment_status == "FTE"
 
 
+def test_find_by_email_returns_employee_with_detailed_fields(
+    mock_config: AirtableConfig,
+    mock_table: Mock,
+) -> None:
+    """Test that find_by_email returns EmployeeRecord with detailed fields populated."""
+    mock_table.all.return_value = [
+        {
+            "id": "rec123",
+            "fields": {
+                "Email": "chase.pettet@example.com",
+                "Manager Email": "mel.masterson@example.com",
+                "Employee Status": "FTE",
+                "Name": "Chase Pettet",
+                "Title": "Principal Security Engineer",
+                "Department": "IT",
+                "Division": "Engineering",
+                "Eng Team": "Security",
+                "Operating Group": "Security",
+                "Start Date": "2025-06-02",
+                "State": "Missouri",
+                "Employment Type": "Full Time",
+                "Manager Name": "Mel Masterson",
+            },
+        }
+    ]
+
+    client = AirtableClient(mock_config)
+    client._table = mock_table
+
+    result = client.find_by_email("chase.pettet@example.com")
+
+    assert result is not None
+    assert result.email == "chase.pettet@example.com"
+    assert result.manager_email == "mel.masterson@example.com"
+    assert result.employment_status == "FTE"
+    assert result.name == "Chase Pettet"
+    assert result.title == "Principal Security Engineer"
+    assert result.department == "IT"
+    assert result.division == "Engineering"
+    assert result.eng_team == "Security"
+    assert result.operating_group == "Security"
+    assert result.start_date == "2025-06-02"
+    assert result.state == "Missouri"
+    assert result.employment_type == "Full Time"
+    assert result.manager_name == "Mel Masterson"
+
+
 def test_find_by_email_returns_none_when_not_found(
     mock_config: AirtableConfig,
     mock_table: Mock,

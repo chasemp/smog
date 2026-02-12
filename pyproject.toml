@@ -19,7 +19,7 @@ mypy = "^1.8.0"
 types-pyyaml = "^6.0.12"
 
 [tool.poetry.scripts]
-smog-lookup = "smog.cli:main"
+smog = "smog.cli:main"
 
 [build-system]
 requires = ["poetry-core"]

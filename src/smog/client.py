@@ -45,6 +45,16 @@ class AirtableClient:
             email=fields.get("Email", ""),
             manager_email=fields.get("Manager Email"),
             employment_status=fields.get("Employee Status", "Unknown"),
+            name=fields.get("Name"),
+            title=fields.get("Title"),
+            department=fields.get("Department"),
+            division=fields.get("Division"),
+            eng_team=fields.get("Eng Team"),
+            operating_group=fields.get("Operating Group"),
+            start_date=fields.get("Start Date"),
+            state=fields.get("State"),
+            employment_type=fields.get("Employment Type"),
+            manager_name=fields.get("Manager Name"),
         )
 
     def get_employee_with_management_chain(self, email: str) -> Optional[EmployeeLookupResult]:

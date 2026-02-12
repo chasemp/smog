@@ -207,3 +207,90 @@ def test_cli_preserves_other_domain() -> None:
         mock_client.get_employee_with_management_chain.assert_called_with("external@example.com")
 
     assert result.exit_code == 0
+
+
+def test_cli_with_details_flag_shows_additional_fields() -> None:
+    """Test that CLI shows detailed fields when --details flag is provided."""
+    runner = CliRunner()
+
+    employee = EmployeeRecord(
+        email="chase.pettet@example.com",
+        manager_email="mel.masterson@example.com",
+        employment_status="FTE",
+        name="Chase Pettet",
+        title="Principal Security Engineer",
+        department="IT",
+        division="Engineering",
+        eng_team="Security",
+        operating_group="Security",
+        start_date="2025-06-02",
+        state="Missouri",
+        employment_type="Full Time",
+        manager_name="Mel Masterson",
+    )
+    manager = EmployeeRecord(
+        email="mel.masterson@example.com",
+        manager_email="john.moore@example.com",
+        employment_status="FTE",
+        name="Mel Masterson",
+        title="Director of Security",
+    )
+
+    result_obj = EmployeeLookupResult(
+        employee=employee,
+        manager=manager,
+        managers_manager=None,
+    )
+
+    with patch("smog.cli.AirtableClient") as mock_client_class:
+        mock_client = Mock()
+        mock_client.get_employee_with_management_chain.return_value = result_obj
+        mock_client_class.return_value = mock_client
+
+        result = runner.invoke(main, ["chase.pettet@example.com", "--details"])
+
+    assert result.exit_code == 0
+    assert "Chase Pettet" in result.output
+    assert "Principal Security Engineer" in result.output
+    assert "IT" in result.output
+    assert "Engineering" in result.output
+    assert "Security" in result.output
+    assert "2025-06-02" in result.output
+    assert "Missouri" in result.output
+    assert "Full Time" in result.output
+    assert "Mel Masterson" in result.output
+
+
+def test_cli_without_details_flag_shows_minimal_fields() -> None:
+    """Test that CLI shows only minimal fields when --details flag is not provided."""
+    runner = CliRunner()
+
+    employee = EmployeeRecord(
+        email="chase.pettet@example.com",
+        manager_email="mel.masterson@example.com",
+        employment_status="FTE",
+        name="Chase Pettet",
+        title="Principal Security Engineer",
+        department="IT",
+    )
+
+    result_obj = EmployeeLookupResult(
+        employee=employee,
+        manager=None,
+        managers_manager=None,
+    )
+
+    with patch("smog.cli.AirtableClient") as mock_client_class:
+        mock_client = Mock()
+        mock_client.get_employee_with_management_chain.return_value = result_obj
+        mock_client_class.return_value = mock_client
+
+        result = runner.invoke(main, ["chase.pettet@example.com"])
+
+    assert result.exit_code == 0
+    assert "chase.pettet@example.com" in result.output
+    assert "FTE" in result.output
+    # Detailed fields should not appear without --details flag
+    assert "Chase Pettet" not in result.output
+    assert "Principal Security Engineer" not in result.output
+    assert "IT" not in result.output
