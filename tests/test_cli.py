@@ -210,3 +210,107 @@ def test_cli_without_details_flag_shows_minimal_fields() -> None:
     assert "Chase Pettet" not in result.output
     assert "Principal Security Engineer" not in result.output
     assert "IT" not in result.output
+
+
+def test_cli_appends_configured_domain_to_username() -> None:
+    """Test that CLI appends configured domain when username provided without @."""
+    runner = CliRunner()
+
+    employee = EmployeeRecord(
+        email="jdoe@example.com",
+        manager_email="manager@example.com",
+        employment_status="FTE",
+    )
+
+    result_obj = EmployeeLookupResult(
+        employee=employee,
+        manager=None,
+        managers_manager=None,
+    )
+
+    with patch("smog.cli.AirtableClient") as mock_client_class, \
+         patch("smog.cli.load_app_config") as mock_app_config:
+
+        # Configure default domain
+        mock_app_config.return_value = {"default_email_domain": "example.com"}
+
+        mock_client = Mock()
+        mock_client.get_employee_with_management_chain.return_value = result_obj
+        mock_client_class.return_value = mock_client
+
+        result = runner.invoke(main, ["jdoe"])
+
+        # Should append configured domain
+        mock_client.get_employee_with_management_chain.assert_called_with("jdoe@example.com")
+
+    assert result.exit_code == 0
+
+
+def test_cli_requires_full_email_when_no_domain_configured() -> None:
+    """Test that CLI passes through input unchanged when no default domain configured."""
+    runner = CliRunner()
+
+    employee = EmployeeRecord(
+        email="jdoe@custom.com",
+        manager_email=None,
+        employment_status="FTE",
+    )
+
+    result_obj = EmployeeLookupResult(
+        employee=employee,
+        manager=None,
+        managers_manager=None,
+    )
+
+    with patch("smog.cli.AirtableClient") as mock_client_class, \
+         patch("smog.cli.load_app_config") as mock_app_config:
+
+        # No default domain configured
+        mock_app_config.return_value = {"default_email_domain": ""}
+
+        mock_client = Mock()
+        mock_client.get_employee_with_management_chain.return_value = result_obj
+        mock_client_class.return_value = mock_client
+
+        # Provide username without domain
+        result = runner.invoke(main, ["jdoe"])
+
+        # Should pass through unchanged (no domain appending)
+        mock_client.get_employee_with_management_chain.assert_called_with("jdoe")
+
+    assert result.exit_code == 0
+
+
+def test_cli_preserves_full_email_regardless_of_config() -> None:
+    """Test that CLI never modifies input that already contains @domain."""
+    runner = CliRunner()
+
+    employee = EmployeeRecord(
+        email="jdoe@custom.com",
+        manager_email=None,
+        employment_status="FTE",
+    )
+
+    result_obj = EmployeeLookupResult(
+        employee=employee,
+        manager=None,
+        managers_manager=None,
+    )
+
+    with patch("smog.cli.AirtableClient") as mock_client_class, \
+         patch("smog.cli.load_app_config") as mock_app_config:
+
+        # Even with default domain configured
+        mock_app_config.return_value = {"default_email_domain": "example.com"}
+
+        mock_client = Mock()
+        mock_client.get_employee_with_management_chain.return_value = result_obj
+        mock_client_class.return_value = mock_client
+
+        # Provide full email
+        result = runner.invoke(main, ["jdoe@custom.com"])
+
+        # Should preserve original email
+        mock_client.get_employee_with_management_chain.assert_called_with("jdoe@custom.com")
+
+    assert result.exit_code == 0

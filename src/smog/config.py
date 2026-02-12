@@ -1,7 +1,7 @@
 """Configuration loading for Airtable client."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import yaml
 from pydantic import BaseModel, Field
@@ -42,3 +42,29 @@ def load_config(secrets_path: Optional[Path] = None) -> AirtableConfig:
         base_id=airtable_config["base_id"],
         table_name=airtable_config["table_name"],
     )
+
+
+def load_app_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
+    """
+    Load application configuration from config.yaml.
+
+    Args:
+        config_path: Path to config.yaml file. If None, uses default location.
+
+    Returns:
+        Dictionary with application configuration.
+        Returns empty dict with default values if config file doesn't exist.
+    """
+    if config_path is None:
+        config_path = Path(__file__).parent.parent.parent / "config.yaml"
+
+    # Return defaults if config file doesn't exist
+    if not config_path.exists():
+        return {"default_email_domain": ""}
+
+    with open(config_path) as f:
+        config = yaml.safe_load(f) or {}
+
+    return {
+        "default_email_domain": config.get("default_email_domain", ""),
+    }
