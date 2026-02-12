@@ -1,4 +1,4 @@
-"""Airtable employee lookup client ."""
+"""Airtable employee lookup client."""
 
 from smog.client import AirtableClient
 from smog.config import AirtableConfig, load_config
