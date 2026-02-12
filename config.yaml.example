@@ -1,0 +1,7 @@
+# Application Configuration
+# Copy this file to config.yaml and customize as needed
+
+# Optional: Default email domain to append when username is provided without @domain
+# If not set or empty, full email addresses are required
+# default_email_domain: "example.com"
+default_email_domain: ""

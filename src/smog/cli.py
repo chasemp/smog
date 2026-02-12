@@ -5,7 +5,23 @@ import sys
 import click
 
 from smog.client import AirtableClient
-from smog.config import load_config
+from smog.config import load_app_config, load_config
+
+
+def normalize_email(email: str, default_domain: str) -> str:
+    """
+    Normalize email by optionally appending default domain.
+
+    Args:
+        email: Email address or username.
+        default_domain: Domain to append if email has no @ and domain is configured.
+
+    Returns:
+        Normalized email address.
+    """
+    if "@" not in email and default_domain:
+        return f"{email}@{default_domain}"
+    return email
 
 
 @click.command()
@@ -16,16 +32,21 @@ def main(email: str, details: bool) -> None:
     Look up an employee by email and display their manager chain.
 
     Args:
-        email: Employee email address to look up.
+        email: Employee email address or username to look up.
+               If no @ is present and default_email_domain is configured,
+               the domain will be appended.
         details: Whether to show detailed employee information.
     """
+    app_config = load_app_config()
+    normalized_email = normalize_email(email, app_config["default_email_domain"])
+
     config = load_config()
     client = AirtableClient(config)
 
-    result = client.get_employee_with_management_chain(email)
+    result = client.get_employee_with_management_chain(normalized_email)
 
     if result is None:
-        click.echo(f"Employee not found: {email}", err=True)
+        click.echo(f"Employee not found: {normalized_email}", err=True)
         sys.exit(1)
 
     click.echo("\n=== Employee Information ===")
